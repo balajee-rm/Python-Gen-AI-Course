@@ -1,0 +1,13 @@
+python -m venv venv
+
+venv\scripts\activate
+
+code .
+
+pip install fastapi uvicorn[standard] google-genai python-dotenv pydantic python-multipart ollama
+
+pip freeze > requirements.txt
+
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+http://localhost:8000/docs
