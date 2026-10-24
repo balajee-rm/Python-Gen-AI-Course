@@ -1,0 +1,105 @@
+Step 1: Download and Test Qwen2.5-1.5B via Ollama
+Open your command prompt or terminal and pull the base model into Ollama:
+
+ollama run qwen2.5:1.5b
+
+Step 2: Test the Base Model with Your Prompt
+Copy and paste this exact prompt into the terminal where Ollama is running:
+
+You are an academic advisor for CSE II Year. Analyze the target student against the class database and output the assessment in strict raw JSON without any markdown formatting or extra text.
+
+Return JSON with these exact keys:
+- "student_name"
+- "overall_standing"
+- "class_rank"
+- "positives" (array)
+- "negatives" (array)
+- "suggestions_to_improve" (array)
+
+Data:
+Target Student: Alice Smith. Database: [{'student_name': 'Alice Smith', 'grades': [{'course_name': 'Data Structures', 'marks_obtained': 88, 'max_marks': 100}]}, {'student_name': 'Bob Jones', 'grades': [{'course_name': 'Data Structures', 'marks_obtained': 62, 'max_marks': 100}]}]
+
+Step 3: Observe the Output
+Notice how the base model responds. Check for common base-model issues:
+
+
+
+
+output
+
+```json
+{
+  "student_name": "Alice Smith",
+  "overall_standing": "Above Average",
+  "class_rank": "3rd",
+  "positives": [
+    "Strong foundation in Data Structures"
+  ],
+  "negatives": [
+    "Potential need for improvement in other subjects"
+  ],
+  "suggestions_to_improve": [
+    "Consider focusing on subjects that are underperforming"
+  ]
+}
+
+
+
+
+Look closely at the output you just got from the base model. This perfectly highlights why fine-tuning is necessary:
+
+Incorrect Calculation: There are only 2 students in the database (Alice with 88% and Bob with 62%). Yet the base model ranked Alice as "3rd"!
+
+Markdown Wrapping: It wrapped the output inside ```json ... ``` backticks instead of returning clean, raw JSON ready for software parsing.
+
+Generic Logic: It guessed generic negatives like "Potential need for improvement in other subjects" even though no other subjects were provided in the dataset.
+
+Now, we move to Phase 2: Fine-Tuning with QLoRA to fix these exact errors!
+
+
+
+
+create data -> student_data.py and export_dataset.py and then run in terminal
+python export_dataset.py
+
+Install Local Training Libraries
+Open your command prompt/terminal inside your project folder and install the required Hugging Face libraries:
+
+pip install transformers datasets peft bitsandbytes trl accelerate
+pip uninstall torch torchvision torchaudio -y
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+
+
+
+Create the Local Training Script (train_local.py)
+Create a new file in your root folder named train_local.py
+
+Run the Local Training
+Execute the script in your terminal:
+
+python train_local.py
+
+
+
+
+create test_model.py
+
+python test_model.py
+
+output
+
+{
+    "student_name": "Alice Smith",
+    "overall_standing": "Good",
+    "class_rank": 1,
+    "positives": [
+        "Strong grasp of core concepts."
+    ],
+    "negatives": [
+        "Potential to excel further through advanced problem-solving techniques."
+    ],
+    "suggestions_to_improve": [
+        "Explore advanced algorithmic problems to enhance analytical skills."
+    ]
+}
