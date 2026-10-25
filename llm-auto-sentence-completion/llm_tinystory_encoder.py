@@ -1,59 +1,58 @@
-import torch
 from datasets import load_dataset
 from transformers import (
-    GPT2Config,
-    GPT2LMHeadModel,
-    GPT2TokenizerFast,
+    BertConfig,
+    BertForMaskedLM,
+    BertTokenizerFast,
+    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
-    DataCollatorForLanguageModeling
 )
 
 # 1. Tokenizer & Blank Model Setup
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
-tokenizer.pad_token = tokenizer.eos_token
+tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
 
-config = GPT2Config(
+config = BertConfig(
     vocab_size=len(tokenizer),
-    n_positions=256,
-    n_embd=128,
-    n_layer=4,
-    n_head=4,
-    bos_token_id=tokenizer.bos_token_id,
-    eos_token_id=tokenizer.eos_token_id,
+    hidden_size=128,
+    num_hidden_layers=4,
+    num_attention_heads=4,
+    intermediate_size=512,
+    max_position_embeddings=128,
+    pad_token_id=tokenizer.pad_token_id,
 )
-model = GPT2LMHeadModel(config)
+model = BertForMaskedLM(config)
 
 # 2. Load TinyStories (Clean, simple dataset for small models)
 print("Loading TinyStories dataset...")
 raw_dataset = load_dataset("roneneldan/TinyStories", split="train")
 
+
 def tokenize_function(examples):
     return tokenizer(examples["text"], truncation=True, max_length=128, padding="max_length")
+
 
 # Use 10,000 samples for better learning
 small_dataset = raw_dataset.select(range(10000))
 tokenized_dataset = small_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
-tokenized_dataset = tokenized_dataset.add_column("labels", tokenized_dataset["input_ids"])
 
 # 3. Training
 training_args = TrainingArguments(
-    output_dir="./my_laptop_llm_tinystories",
-    num_train_epochs=5,               # More passes over data
+    output_dir="./my_laptop_llm_tinystories_encoder",
+    num_train_epochs=3,
     per_device_train_batch_size=8,
     save_steps=500,
     logging_steps=50,
-    learning_rate=5e-4
+    learning_rate=5e-4,
 )
 
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_dataset,
-    data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
+    data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15),
 )
 
 trainer.train()
 
-model.save_pretrained("./my_laptop_llm_tinystories")
-tokenizer.save_pretrained("./my_laptop_llm_tinystories")
+model.save_pretrained("./my_laptop_llm_tinystories_encoder")
+tokenizer.save_pretrained("./my_laptop_llm_tinystories_encoder")

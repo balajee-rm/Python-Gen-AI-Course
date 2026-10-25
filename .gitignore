@@ -1,0 +1,43 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Local ML datasets, caches, checkpoints, and trained model outputs
+.cache/
+**/checkpoint-*/
+llm-auto-sentence-completion/my_custom_tokenizer/
+llm-auto-sentence-completion/my_laptop_llm_*/
+llm-auto-sentence-completion/my_laptop_llm_*.pt
+
+# Temporary smoke-test output
+.scratch_decoder_smoke_test/
+temp_decoder_smoke/
