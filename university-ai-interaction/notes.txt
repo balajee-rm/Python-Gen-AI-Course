@@ -4,7 +4,7 @@ venv\scripts\activate
 
 code .
 
-pip install fastapi uvicorn[standard] google-genai python-dotenv pydantic python-multipart ollama
+pip install fastapi uvicorn[standard] google-genai python-dotenv pydantic python-multipart
 
 pip freeze > requirements.txt
 
