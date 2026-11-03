@@ -28,7 +28,7 @@ class SimpleScratchDecoder(nn.Module):
         # Final Output Layer (Maps vector back to vocabulary scores)
         self.to_vocab = nn.Linear(d_model, vocab_size)
 
-    def forward(self, input_ids, labels=None):
+    def forward(self, input_ids, attention_mask=None, labels=None):
         batch_size, seq_len = input_ids.shape
         
         # Step 1: Create embeddings + positions
@@ -46,6 +46,9 @@ class SimpleScratchDecoder(nn.Module):
         # Step 4: Causal Mask (Stops the model from looking into the future)
         mask = torch.triu(torch.ones(seq_len, seq_len, device=input_ids.device, dtype=torch.bool), diagonal=1)
         scores = scores.masked_fill(mask, float("-inf"))
+        if attention_mask is not None:
+            padding_mask = attention_mask[:, None, None, :].to(dtype=torch.bool)
+            scores = scores.masked_fill(~padding_mask, float("-inf"))
         
         # Step 5: Softmax & Attention Output
         attn_weights = torch.softmax(scores, dim=-1)
@@ -67,9 +70,20 @@ class SimpleScratchDecoder(nn.Module):
 
     # Simple, non-complex generation method
     @torch.no_grad()
-    def generate(self, input_ids, max_new_tokens=40, temperature=1.0, **kwargs):
+    def generate(self, input_ids, max_new_tokens=40, temperature=1.0, top_k=0, top_p=1.0):
         for _ in range(max_new_tokens):
             logits = self(input_ids)[:, -1, :] / temperature
+            if top_k > 0:
+                threshold = torch.topk(logits, min(top_k, logits.size(-1))).values[:, -1, None]
+                logits = logits.masked_fill(logits < threshold, float("-inf"))
+            if top_p < 1.0:
+                sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+                cumulative_probabilities = torch.softmax(sorted_logits, dim=-1).cumsum(dim=-1)
+                sorted_indices_to_remove = cumulative_probabilities > top_p
+                sorted_indices_to_remove[:, 1:] = sorted_indices_to_remove[:, :-1].clone()
+                sorted_indices_to_remove[:, 0] = False
+                indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+                logits = logits.masked_fill(indices_to_remove, float("-inf"))
             probs = torch.softmax(logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1)
             input_ids = torch.cat((input_ids, next_token), dim=1)

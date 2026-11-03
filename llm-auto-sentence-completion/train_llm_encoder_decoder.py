@@ -25,9 +25,9 @@ config = T5Config(
 )
 model = T5ForConditionalGeneration(config)
 
-# 2. Load TinyStories (Clean, simple dataset for small models)
-print("Loading TinyStories dataset...")
-raw_dataset = load_dataset("roneneldan/TinyStories", split="train")
+# 2. Load Khan Academy educational content
+print("Loading Khan Academy dataset...")
+raw_dataset = load_dataset("HuggingFaceTB/cosmopedia", "khanacademy", split="train")
 
 
 def tokenize_function(examples):
@@ -42,7 +42,7 @@ def tokenize_function(examples):
         if split_index <= 0 or split_index >= len(text) - 1:
             split_index = max(1, len(text) // 2)
 
-        inputs.append(f"continue the story: {text[:split_index].strip()}")
+        inputs.append(f"continue the lesson: {text[:split_index].strip()}")
         targets.append(text[split_index:].strip())
 
     return tokenizer(
@@ -53,13 +53,13 @@ def tokenize_function(examples):
     )
 
 
-# Use 10,000 samples for better learning
-small_dataset = raw_dataset.select(range(10000))
+MODEL_DIR = "./llm_encoder_decoder_model"
+small_dataset = raw_dataset.select(range(24000))
 tokenized_dataset = small_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
 # 3. Training
 training_args = TrainingArguments(
-    output_dir="./my_laptop_llm_tinystories_encoder_decoder",
+    output_dir=MODEL_DIR,
     num_train_epochs=3,
     per_device_train_batch_size=8,
     save_steps=500,
@@ -76,5 +76,5 @@ trainer = Trainer(
 
 trainer.train()
 
-model.save_pretrained("./my_laptop_llm_tinystories_encoder_decoder")
-tokenizer.save_pretrained("./my_laptop_llm_tinystories_encoder_decoder")
+model.save_pretrained(MODEL_DIR)
+tokenizer.save_pretrained(MODEL_DIR)

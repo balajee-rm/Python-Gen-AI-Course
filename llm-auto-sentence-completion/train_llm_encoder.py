@@ -22,22 +22,23 @@ config = BertConfig(
 )
 model = BertForMaskedLM(config)
 
-# 2. Load TinyStories (Clean, simple dataset for small models)
-print("Loading TinyStories dataset...")
-raw_dataset = load_dataset("roneneldan/TinyStories", split="train")
+# 2. Load Khan Academy educational content
+print("Loading Khan Academy dataset...")
+raw_dataset = load_dataset("HuggingFaceTB/cosmopedia", "khanacademy", split="train")
 
 
 def tokenize_function(examples):
     return tokenizer(examples["text"], truncation=True, max_length=128, padding="max_length")
 
 
-# Use 10,000 samples for better learning
-small_dataset = raw_dataset.select(range(10000))
+# Use 24,000 samples for training
+MODEL_DIR = "./llm_encoder_model"
+small_dataset = raw_dataset.select(range(24000))
 tokenized_dataset = small_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
 # 3. Training
 training_args = TrainingArguments(
-    output_dir="./my_laptop_llm_tinystories_encoder",
+    output_dir=MODEL_DIR,
     num_train_epochs=3,
     per_device_train_batch_size=8,
     save_steps=500,
@@ -54,5 +55,5 @@ trainer = Trainer(
 
 trainer.train()
 
-model.save_pretrained("./my_laptop_llm_tinystories_encoder")
-tokenizer.save_pretrained("./my_laptop_llm_tinystories_encoder")
+model.save_pretrained(MODEL_DIR)
+tokenizer.save_pretrained(MODEL_DIR)
