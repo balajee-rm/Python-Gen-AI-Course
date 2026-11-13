@@ -1,17 +1,27 @@
 import os
 import json
 
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Depends
 from fastapi.responses import JSONResponse
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from schema import TextRequest
+import jwt
 
 load_dotenv()
 
 genai_api_key = os.getenv("GEMINI_API_KEY")
 model = os.getenv("CHAT_MODEL")
+ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Helper: Direct header extraction for a custom "token" field
+async def get_current_user(token: str = Header(...)) -> str:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["user"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 app = FastAPI(
     title="AI Tutor",
@@ -28,7 +38,7 @@ gemini_client = genai.Client(api_key=genai_api_key)
 
 # Text input to generate explanation for the topic
 @app.post("/generate-explanation")
-async def generate_explanation(request: TextRequest):
+async def generate_explanation(request: TextRequest, user: str = Depends(get_current_user)):
     prompt = f"""
     You are an AI tutor creating study material for a student.
     Topic: "{request.topic}"
@@ -61,7 +71,7 @@ async def generate_explanation(request: TextRequest):
 
 # Academic Image Analysis and Explanation
 @app.post("/analyze-image")
-async def analyze_image(file: UploadFile = File(...), question: str = Form(...)):
+async def analyze_image(file: UploadFile = File(...), question: str = Form(...), user: str = Depends(get_current_user)):
 
     if file.content_type not in ["image/jpeg", "image/png"]:
         return JSONResponse(content={"error": "Invalid file type. Only JPEG and PNG images are allowed."}, status_code=400)
@@ -104,7 +114,7 @@ async def analyze_image(file: UploadFile = File(...), question: str = Form(...))
 
 # Text Question and Audio Answer Evaluation
 @app.post("/evaluate-answer")
-async def evaluate_answer(question: str = Form(...), answer: UploadFile = File(...)):
+async def evaluate_answer(question: str = Form(...), answer: UploadFile = File(...), user: str = Depends(get_current_user)):
 
     if answer.content_type not in ["audio/mpeg", "audio/wav", "audio/mp3"]:
         return JSONResponse(content={"error": "Invalid file type. Only MP3 and WAV audio files are allowed."}, status_code=400)
@@ -146,7 +156,7 @@ async def evaluate_answer(question: str = Form(...), answer: UploadFile = File(.
 
 # Video Analysis and Generating 3 MCQs Questions with Answers
 @app.post("/analyze-video")
-async def analyze_video(file: UploadFile = File(...)):
+async def analyze_video(file: UploadFile = File(...), user: str = Depends(get_current_user)):
 
     if file.content_type not in ["video/mp4", "video/avi", "video/mov"]:
         return JSONResponse(content={"error": "Invalid file type. Only MP4, AVI, and MOV video files are allowed."}, status_code=400)
