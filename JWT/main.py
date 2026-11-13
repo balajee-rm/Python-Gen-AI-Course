@@ -12,13 +12,14 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
+MONGO_URI = os.getenv("MONGO_URI")
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # MongoDB Cloud Connection URL
-MONGO_DETAILS = "mongodb+srv://admin:admin@cluster0.cjqwipx.mongodb.net/"
-client = AsyncIOMotorClient(MONGO_DETAILS)
+
+client = AsyncIOMotorClient(MONGO_URI)
 users_collection = client.mydb.users
 
 # Single Schema for Signup and Signin
