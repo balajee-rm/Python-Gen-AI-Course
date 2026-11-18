@@ -24,6 +24,7 @@ config = GPT2Config(
     n_embd=128,
     n_layer=4,
     n_head=4,
+    n_inner=512,
     bos_token_id=tokenizer.bos_token_id,
     eos_token_id=tokenizer.eos_token_id,
 )

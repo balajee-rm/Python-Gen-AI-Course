@@ -45,12 +45,7 @@ def tokenize_function(examples):
         inputs.append(f"continue the lesson: {text[:split_index].strip()}")
         targets.append(text[split_index:].strip())
 
-    return tokenizer(
-        inputs,
-        text_target=targets,
-        truncation=True,
-        max_length=128,
-    )
+    return tokenizer(inputs, text_target=targets, truncation=True, max_length=128)
 
 
 MODEL_DIR = "./llm_encoder_decoder_model"

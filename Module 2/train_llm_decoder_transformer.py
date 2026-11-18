@@ -19,7 +19,6 @@ tokenizer.pad_token = tokenizer.eos_token
 # 2. Create the from-scratch decoder
 model = SimpleScratchDecoder(vocab_size=len(tokenizer), d_model=128, num_heads=4)
 
-
 # 3. Tokenize educational content
 def tokenize_function(examples):
     return tokenizer(examples["text"], truncation=True, max_length=128, padding="max_length")

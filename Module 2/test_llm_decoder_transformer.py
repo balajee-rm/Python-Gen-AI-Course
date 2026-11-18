@@ -14,7 +14,6 @@ model.eval()
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
 
-
 def generate_text(prompt, temperature, top_k, top_p):
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=128).to(device)
 
