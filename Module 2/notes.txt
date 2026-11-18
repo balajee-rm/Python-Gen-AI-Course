@@ -1,0 +1,15 @@
+pip install transformers datasets uvicorn fastapi python-dotenv pydantic python-multipart accelerate
+
+for cpu version
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+for gpu version (1.0gb size)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+if need to go with particular version
+pip install torch==2.13.0 transformers==5.14.1 datasets==5.0.1
+
+Testing cpu or gpu -> cmd
+python -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device Name:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU Only'); print('PyTorch Build Version:', torch.version)"
+
+true for gpu and false for cpu
